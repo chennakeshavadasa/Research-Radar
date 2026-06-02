@@ -553,255 +553,302 @@
   ════════════════════════════════════════════════════════ */
 
   const DOMAINS = [
-    { key:'ai',        label:'AI',        color:'--domain-ai',       desc:'ML · deep learning · LLMs · alignment · foundation models' },
-    { key:'ai-finance',label:'AI×FINANCE',color:'--domain-finance',  desc:'ML for pricing · risk · credit scoring · NLP on filings' },
-    { key:'quant',     label:'QUANT',     color:'--domain-quant',    desc:'Systematic strategies · factor models · portfolio construction' },
-    { key:'hft',       label:'HFT',       color:'--domain-hft',      desc:'Market microstructure · latency arbitrage · order book dynamics' },
-    { key:'computing', label:'COMPUTING', color:'--domain-computing',desc:'CPU/GPU/memory architecture · compilers · OS · distributed systems' },
-    { key:'vlsi',      label:'VLSI',      color:'--domain-vlsi',     desc:'Physical design · place & route · verification · EDA tools' },
-    { key:'ams',       label:'AMS/RF',    color:'--domain-ams',      desc:'ADCs · DACs · PLLs · amplifiers · bandgap refs · RF transceivers' },
-    { key:'serdes',    label:'SERDES',    color:'--domain-serdes',   desc:'CDR · equalization · PAM4 · coherent optical · wireline links' },
-    { key:'ai-chips',  label:'AI CHIPS',  color:'--domain-aichips', desc:'NPUs · chiplets · compute-in-memory · dataflow architectures' },
+    { key:'ai',        label:'AI',        color:'--domain-ai',       desc:'NeurIPS · ICML · ICLR · JMLR · TPAMI · foundation models · alignment' },
+    { key:'ai-finance',label:'AI×FINANCE',color:'--domain-finance',  desc:'JFDS · q-fin · ML for trading · NLP on filings · credit risk · MLP de Prado' },
+    { key:'quant',     label:'QUANT',     color:'--domain-quant',    desc:'Factor models · AQR · Two Sigma · Man AHL · Risk.net · portfolio construction' },
+    { key:'hft',       label:'HFT',       color:'--domain-hft',      desc:'Market microstructure · Jane Street · order book · latency · SSRN q-fin.TR' },
+    { key:'computing', label:'COMPUTING', color:'--domain-computing',desc:'ISCA · MICRO · HPCA · ASPLOS · IEEE Micro · Chips & Cheese · memory systems' },
+    { key:'vlsi',      label:'VLSI',      color:'--domain-vlsi',     desc:'DAC · ICCAD · IEEE TCAD · EDA · place & route · SemiAnalysis · Cadence/Synopsys' },
+    { key:'ams',       label:'AMS/RF',    color:'--domain-ams',      desc:'ISSCC · JSSC · TCAS-I/II · CICC · ESSCIRC · ADCs · PLLs · amplifiers · bandgap' },
+    { key:'serdes',    label:'SERDES',    color:'--domain-serdes',   desc:'ISSCC · DesignCon · OFC · CDR · PAM4 · Signal Integrity Journal · OIF CEI' },
+    { key:'ai-chips',  label:'AI CHIPS',  color:'--domain-aichips', desc:'ISSCC · Hot Chips · MLSys · JSSC · SemiAnalysis · NPUs · systolic · CIM' },
   ];
 
   const ARXIV_CATS = {
-    'ai':        ['cs.LG','cs.AI','cs.CL','cs.CV','stat.ML'],
-    'ai-finance':['q-fin.CP','q-fin.TR','q-fin.MF','cs.LG','stat.ML'],
-    'quant':     ['q-fin.TR','q-fin.PM','q-fin.MF','q-fin.PR','q-fin.CP'],
-    'hft':       ['q-fin.TR','q-fin.ST','q-fin.MF'],
-    'computing': ['cs.AR','cs.DC','cs.OS','cs.PF','cs.SY','cs.NI'],
-    'vlsi':      ['cs.AR','eess.SP','cs.ET'],
-    'ams':       ['eess.SP','eess.SY','cs.AR','eess.AS'],
-    'serdes':    ['eess.SP','cs.AR','eess.SY','eess.AS'],
-    'ai-chips':  ['cs.AR','cs.LG','cs.ET','cs.NE'],
+    // AI/ML — core ML theory, deep learning, NLP, CV, statistics
+    'ai':        ['cs.LG','cs.AI','cs.CL','cs.CV','cs.NE','stat.ML'],
+    // AI × Finance — quantitative finance + ML categories
+    'ai-finance':['q-fin.CP','q-fin.TR','q-fin.MF','q-fin.PM','q-fin.RM','cs.LG','stat.ML','cs.CE'],
+    // Quant — all quantitative finance tracks
+    'quant':     ['q-fin.TR','q-fin.PM','q-fin.MF','q-fin.PR','q-fin.CP','q-fin.RM','q-fin.ST','q-fin.EC'],
+    // HFT / Market Microstructure — trading + statistical finance
+    'hft':       ['q-fin.TR','q-fin.ST','q-fin.MF','q-fin.EC'],
+    // Computing / Computer Architecture — arch, distributed, OS, perf, compilers
+    'computing': ['cs.AR','cs.DC','cs.OS','cs.PF','cs.PL','cs.SY','cs.NI'],
+    // VLSI / EDA — emerging technologies, CAD, hardware architecture
+    'vlsi':      ['cs.ET','cs.AR','eess.SP','cs.PF'],
+    // AMS/RF — signal processing, systems, circuits (eess.SP is closest on arXiv)
+    'ams':       ['eess.SP','eess.SY','eess.AS','physics.ins-det'],
+    // SerDes / High-Speed IO — signal processing + networking + RF
+    'serdes':    ['eess.SP','eess.SY','cs.NI','cs.AR'],
+    // AI Chips — hardware architecture + ML + emerging tech
+    'ai-chips':  ['cs.AR','cs.LG','cs.ET','cs.NE','cs.DC'],
   };
 
-  // S2 search queries — used for ALL domains (not just hardware)
+  // S2 search queries — tuned to surface top-venue papers (NeurIPS, ICML, ISSCC, ISCA, etc.)
   const S2_QUERIES = {
-    'ai':        'large language models transformer neural architecture alignment RLHF',
-    'ai-finance':'machine learning finance deep learning trading NLP financial risk credit',
-    'quant':     'quantitative trading factor model portfolio construction systematic alpha',
-    'hft':       'high frequency trading market microstructure order book latency execution',
-    'computing': 'computer architecture processor memory hierarchy compiler GPU distributed',
-    'vlsi':      'VLSI physical design EDA place route timing machine learning verification',
-    'ams':       'ADC DAC PLL analog CMOS ISSCC JSSC bandgap noise SAR delta-sigma amplifier',
-    'serdes':    'SerDes CDR equalization PAM4 wireline transceiver jitter high-speed link',
-    'ai-chips':  'AI accelerator NPU compute-in-memory chiplet dataflow systolic sparse DRAM',
+    'ai':        'transformer large language model RLHF alignment NeurIPS ICML ICLR diffusion generative',
+    'ai-finance':'machine learning quantitative finance NLP trading credit risk portfolio deep learning',
+    'quant':     'factor model systematic trading momentum mean reversion portfolio construction alpha signal',
+    'hft':       'high frequency trading market microstructure order book latency execution adverse selection',
+    'computing': 'computer architecture ISCA MICRO HPCA processor cache memory hierarchy ASPLOS compiler',
+    'vlsi':      'VLSI EDA physical design place route timing closure DAC ICCAD cell library power grid',
+    'ams':       'ADC DAC PLL amplifier CMOS ISSCC JSSC CICC ESSCIRC bandgap delta-sigma SAR noise',
+    'serdes':    'SerDes CDR equalization PAM4 wireline transceiver ISSCC DesignCon jitter eye diagram',
+    'ai-chips':  'AI accelerator NPU systolic array compute-in-memory ISSCC Hot Chips chiplet inference hardware',
   };
 
-  // Semantic Scholar author IDs — confirmed from URL patterns
-  // Each domain gets its top 4-6 most cited/active professors
+  // Semantic Scholar author IDs — top researchers per domain, drawn from resources doc
   const PROF_AUTHORS = {
     'ai': [
-      { name:'Yoshua Bengio',    id:'1751762'    },  // Turing Award, Mila
-      { name:'Geoffrey Hinton',  id:'1695689'    },  // Nobel Physics 2024, Turing Award
-      { name:'Yann LeCun',       id:'1716555'    },  // Turing Award, Meta AI
-      { name:'Kaiming He',       id:'39353098'   },  // ResNet, MAE — Meta FAIR
-      { name:'Ashish Vaswani',   id:'2073428'    },  // Attention Is All You Need
-      { name:'Ilya Sutskever',   id:'2010485'    },  // GPT, OpenAI co-founder
-      { name:'Percy Liang',      id:'1800034'    },  // Stanford HELM, CRFM
-      { name:'Chelsea Finn',     id:'46234526'   },  // Meta-learning, Stanford
+      { name:'Yoshua Bengio',      id:'1751762'    },  // Turing Award, Mila
+      { name:'Geoffrey Hinton',    id:'1695689'    },  // Nobel Physics 2024
+      { name:'Yann LeCun',         id:'1716555'    },  // Turing Award, Meta AI
+      { name:'Kaiming He',         id:'39353098'   },  // ResNet, MAE — Meta FAIR
+      { name:'Ilya Sutskever',     id:'2010485'    },  // GPT, SSI
+      { name:'Percy Liang',        id:'1800034'    },  // Stanford HELM, CRFM
+      { name:'Chelsea Finn',       id:'46234526'   },  // Meta-learning, Stanford
+      { name:'Andrej Karpathy',    id:'2082939'    },  // Tesla, OpenAI, Stanford
+      { name:'Jacob Steinhardt',   id:'2054534'    },  // UC Berkeley, alignment
     ],
     'ai-finance': [
-      { name:'Marcos Lopez de Prado', id:'1740859347' },
-      { name:'Andrew Lo',        id:'1783590'    },  // MIT Sloan, adaptive markets
-      { name:'Stefan Jansen',    id:'2093564384' },  // ML for Algorithmic Trading
+      { name:'Marcos Lopez de Prado', id:'1740859347' }, // MLFA, Cornell
+      { name:'Andrew Lo',          id:'1783590'    },  // MIT Sloan, adaptive markets
+      { name:'Campbell Harvey',    id:'2113490'    },  // Duke, factor zoo
+      { name:'Stefan Jansen',      id:'2093564384' },  // ML for Algorithmic Trading
     ],
     'quant': [
       { name:'Marcos Lopez de Prado', id:'1740859347' },
-      { name:'Andrew Lo',        id:'1783590'    },
-      { name:'Campbell Harvey',  id:'2113490'    },  // Duke, factor zoo
+      { name:'Andrew Lo',          id:'1783590'    },
+      { name:'Campbell Harvey',    id:'2113490'    },  // Duke, factor zoo
+      { name:'Eugene Fama',        id:'3071038'    },  // Chicago, EMH Nobel
+      { name:'Robert Shiller',     id:'2044437'    },  // Yale, CAPE, Nobel
     ],
     'hft': [
       { name:'Marcos Lopez de Prado', id:'1740859347' },
-      { name:'Albert Kyle',      id:'2008481'    },  // market microstructure
-      { name:'Thierry Foucault', id:'2080498'    },  // HEC Paris, order book
+      { name:'Albert Kyle',        id:'2008481'    },  // Kyle model, market impact
+      { name:'Thierry Foucault',   id:'2080498'    },  // HEC Paris, order book
+      { name:'Maureen O\'Hara',    id:'2034283'    },  // Cornell, market microstructure
+      { name:'Lawrence Harris',    id:'2083019'    },  // USC, trading theory
     ],
     'computing': [
-      { name:'David Patterson',  id:'1760423'    },  // RISC, Turing Award
-      { name:'John Hennessy',    id:'1780870'    },  // ARM, Turing Award
-      { name:'Tim Kraska',       id:'2074961'    },  // learned index structures
-      { name:'Ion Stoica',       id:'1734083'    },  // Spark, Ray, Berkeley
+      { name:'David Patterson',    id:'1760423'    },  // RISC, Turing Award
+      { name:'John Hennessy',      id:'1780870'    },  // ARM, Turing Award
+      { name:'Onur Mutlu',         id:'1780512'    },  // ETH Zurich, memory systems
+      { name:'Ion Stoica',         id:'1734083'    },  // Spark, Ray, Berkeley
+      { name:'Tim Kraska',         id:'2074961'    },  // learned index structures, MIT
+      { name:'Matei Zaharia',      id:'1887870'    },  // Databricks, Spark, Stanford
     ],
     'vlsi': [
-      { name:'David Pan',        id:'1769593'    },  // UT Austin, EDA
-      { name:'Sachin Sapatnekar',id:'1791558'    },  // Minnesota, physical design
-      { name:'Rob Rutenbar',     id:'1769400'    },  // UIUC, EDA
+      { name:'David Pan',          id:'1769593'    },  // UT Austin, ML for EDA
+      { name:'Sachin Sapatnekar',  id:'1791558'    },  // Minnesota, physical design
+      { name:'Rob Rutenbar',       id:'1769400'    },  // UIUC, EDA
+      { name:'Evangeline Young',   id:'2110484'    },  // CUHK, placement
+      { name:'Yibo Lin',           id:'2145831698' },  // PKU, DREAMPlace, ML-EDA
     ],
     'ams': [
-      { name:'Boris Murmann',    id:'1698147'    },  // Stanford, ADC surveys
-      { name:'Behzad Razavi',    id:'1752422'    },  // UCLA, RF CMOS
-      { name:'Elad Alon',        id:'1690845'    },  // Berkeley, mixed-signal
-      { name:'Pieter Harpe',     id:'2063802'    },  // TU/e, ultra-low-power ADC
-      { name:'Willy Sansen',     id:'1706218'    },  // KU Leuven, analog IC design
+      { name:'Boris Murmann',      id:'1698147'    },  // Stanford, ADC surveys
+      { name:'Behzad Razavi',      id:'1752422'    },  // UCLA, RF CMOS
+      { name:'Elad Alon',          id:'1690845'    },  // Berkeley, mixed-signal
+      { name:'Pieter Harpe',       id:'2063802'    },  // TU/e, ultra-low-power ADC
+      { name:'Willy Sansen',       id:'1706218'    },  // KU Leuven, analog IC
+      { name:'Robert Walden',      id:'2082384'    },  // ADC performance survey
     ],
     'serdes': [
-      { name:'Pavan Hanumolu',   id:'1770635'    },  // UIUC, PLLs CDR
-      { name:'Elad Alon',        id:'1690845'    },  // Berkeley, wireline
-      { name:'Vladimir Stojanovic', id:'2163491' },  // Berkeley, silicon photonics
-      { name:'Azita Emami',      id:'1706382'    },  // Caltech, high-speed links
+      { name:'Pavan Hanumolu',     id:'1770635'    },  // UIUC, PLLs CDR
+      { name:'Elad Alon',          id:'1690845'    },  // Berkeley, wireline
+      { name:'Vladimir Stojanovic',id:'2163491'    },  // Berkeley, silicon photonics
+      { name:'Azita Emami',        id:'1706382'    },  // Caltech, high-speed links
+      { name:'Frank O\'Mahony',    id:'2162748'    },  // Intel, high-speed I/O
     ],
     'ai-chips': [
-      { name:'Joel Emer',        id:'1775477'    },  // MIT/NVIDIA, Timeloop/Eyeriss
-      { name:'Vivienne Sze',     id:'2055372'    },  // MIT, energy-efficient ML
-      { name:'Tushar Krishna',   id:'2163054'    },  // Georgia Tech, NoC
-      { name:'Onur Mutlu',       id:'1780512'    },  // ETH Zurich, memory systems
+      { name:'Joel Emer',          id:'1775477'    },  // MIT/NVIDIA, Timeloop/Eyeriss
+      { name:'Vivienne Sze',       id:'2055372'    },  // MIT, energy-efficient ML
+      { name:'Tushar Krishna',     id:'2163054'    },  // Georgia Tech, NoC/systolic
+      { name:'Onur Mutlu',         id:'1780512'    },  // ETH Zurich, PIM/memory
+      { name:'Bill Dally',         id:'1709588'    },  // Stanford/NVIDIA Chief Scientist
+      { name:'Kunle Olukotun',     id:'1770437'    },  // Stanford, parallel arch
     ],
   };
 
   // Google Scholar author IDs for SerpApi integration
   // scholar.google.com/citations?user=<SCHOLAR_ID>
-  // Used when SerpApi key is provided for richer, more current data
   const SCHOLAR_AUTHORS = {
     'ai': [
-      { name:'Yoshua Bengio',    id:'kukA0LcAAAAJ', affil:'Mila / U Montréal' },
-      { name:'Geoffrey Hinton',  id:'JicYPdAAAAAJ', affil:'U Toronto / Nobel 2024' },
-      { name:'Yann LeCun',       id:'WLN3QrAAAAAJ', affil:'NYU / Meta' },
-      { name:'Andrej Karpathy',  id:'l8WuQJgAAAAJ', affil:'Stanford / OpenAI' },
-      { name:'Ilya Sutskever',   id:'x04W0aBAAAAJ', affil:'SSI' },
-      { name:'Kaiming He',       id:'DhtAFkwAAAAJ', affil:'Meta FAIR' },
-      { name:'Chelsea Finn',     id:'vr_8BBUAAAAJ', affil:'Stanford' },
+      { name:'Yoshua Bengio',      id:'kukA0LcAAAAJ', affil:'Mila / U Montréal' },
+      { name:'Geoffrey Hinton',    id:'JicYPdAAAAAJ', affil:'U Toronto / Nobel 2024' },
+      { name:'Yann LeCun',         id:'WLN3QrAAAAAJ', affil:'NYU / Meta' },
+      { name:'Andrej Karpathy',    id:'l8WuQJgAAAAJ', affil:'Stanford / OpenAI' },
+      { name:'Kaiming He',         id:'DhtAFkwAAAAJ', affil:'Meta FAIR' },
+      { name:'Chelsea Finn',       id:'vr_8BBUAAAAJ', affil:'Stanford' },
+      { name:'Jacob Steinhardt',   id:'qFsXt88AAAAJ', affil:'UC Berkeley' },
     ],
     'ai-finance': [
       { name:'Marcos Lopez de Prado', id:'xYEXDpIAAAAJ', affil:'Cornell / ADIA' },
-      { name:'Andrew Lo',        id:'DX1vk68AAAAJ', affil:'MIT Sloan' },
-      { name:'Campbell Harvey',  id:'C4QhWvQAAAAJ', affil:'Duke / NBER' },
+      { name:'Andrew Lo',          id:'DX1vk68AAAAJ', affil:'MIT Sloan' },
+      { name:'Campbell Harvey',    id:'C4QhWvQAAAAJ', affil:'Duke / NBER' },
+      { name:'Stefan Jansen',      id:'qJxiMdQAAAAJ', affil:'ML for Algo Trading' },
     ],
     'quant': [
       { name:'Marcos Lopez de Prado', id:'xYEXDpIAAAAJ', affil:'Cornell / ADIA' },
-      { name:'Andrew Lo',        id:'DX1vk68AAAAJ', affil:'MIT Sloan' },
-      { name:'Eugene Fama',      id:'PUhMqq4AAAAJ', affil:'Chicago Booth' },
+      { name:'Andrew Lo',          id:'DX1vk68AAAAJ', affil:'MIT Sloan' },
+      { name:'Eugene Fama',        id:'PUhMqq4AAAAJ', affil:'Chicago Booth' },
+      { name:'Campbell Harvey',    id:'C4QhWvQAAAAJ', affil:'Duke / NBER' },
     ],
     'hft': [
       { name:'Marcos Lopez de Prado', id:'xYEXDpIAAAAJ', affil:'Cornell / ADIA' },
-      { name:'Thierry Foucault', id:'w3OyEFkAAAAJ', affil:'HEC Paris' },
+      { name:'Thierry Foucault',   id:'w3OyEFkAAAAJ', affil:'HEC Paris' },
+      { name:'Albert Kyle',        id:'jSLgDsEAAAAJ', affil:'U Maryland' },
     ],
     'computing': [
-      { name:'David Patterson',  id:'sdfVEq4AAAAJ', affil:'Berkeley / Google' },
-      { name:'Matei Zaharia',    id:'I1EvjZsAAAAJ', affil:'Stanford / Databricks' },
-      { name:'Ion Stoica',       id:'S28NepoAAAAJ', affil:'Berkeley / Anyscale' },
+      { name:'David Patterson',    id:'sdfVEq4AAAAJ', affil:'Berkeley / Google' },
+      { name:'Onur Mutlu',         id:'0Kk1NMIAAAAJ', affil:'ETH Zurich' },
+      { name:'Matei Zaharia',      id:'I1EvjZsAAAAJ', affil:'Stanford / Databricks' },
+      { name:'Ion Stoica',         id:'S28NepoAAAAJ', affil:'Berkeley / Anyscale' },
     ],
     'vlsi': [
-      { name:'David Pan',        id:'V4VNbOkAAAAJ', affil:'UT Austin' },
+      { name:'David Pan',          id:'V4VNbOkAAAAJ', affil:'UT Austin' },
+      { name:'Yibo Lin',           id:'b0dF804AAAAJ', affil:'PKU / DREAMPlace' },
     ],
     'ams': [
-      { name:'Boris Murmann',    id:'KqcKi4QAAAAJ', affil:'Stanford' },
-      { name:'Behzad Razavi',    id:'s3Mk0JIAAAAJ', affil:'UCLA' },
-      { name:'Elad Alon',        id:'d7hF7VEAAAAJ', affil:'Berkeley' },
+      { name:'Boris Murmann',      id:'KqcKi4QAAAAJ', affil:'Stanford' },
+      { name:'Behzad Razavi',      id:'s3Mk0JIAAAAJ', affil:'UCLA' },
+      { name:'Elad Alon',          id:'d7hF7VEAAAAJ', affil:'Berkeley' },
+      { name:'Pieter Harpe',       id:'pHBSPPsAAAAJ', affil:'TU Eindhoven' },
     ],
     'serdes': [
-      { name:'Pavan Hanumolu',   id:'HdALolMAAAAJ', affil:'UIUC' },
-      { name:'Vladimir Stojanovic', id:'0pNPTdIAAAAJ', affil:'Berkeley' },
+      { name:'Pavan Hanumolu',     id:'HdALolMAAAAJ', affil:'UIUC' },
+      { name:'Vladimir Stojanovic',id:'0pNPTdIAAAAJ', affil:'Berkeley' },
+      { name:'Elad Alon',          id:'d7hF7VEAAAAJ', affil:'Berkeley' },
     ],
     'ai-chips': [
-      { name:'Joel Emer',        id:'E3IUP8AAAAAJ', affil:'MIT / NVIDIA' },
-      { name:'Vivienne Sze',     id:'6WZQA6cAAAAJ', affil:'MIT' },
-      { name:'Tushar Krishna',   id:'P__ztgcAAAAJ', affil:'Georgia Tech' },
+      { name:'Joel Emer',          id:'E3IUP8AAAAAJ', affil:'MIT / NVIDIA' },
+      { name:'Vivienne Sze',       id:'6WZQA6cAAAAJ', affil:'MIT' },
+      { name:'Tushar Krishna',     id:'P__ztgcAAAAJ', affil:'Georgia Tech' },
+      { name:'Bill Dally',         id:'HFVLTHEAAAAJ', affil:'Stanford / NVIDIA' },
     ],
   };
 
-  // RSS blog feeds — company research blogs + academic blogs
-  // Covers lab blogs, industry research, and specialist publications
+  // RSS blog feeds — curated from resources_v2.md: top labs, top practitioners, no junk
   const BLOG_FEEDS = {
     'ai': [
-      // Big lab blogs
-      { name:'Google DeepMind',   url:'https://deepmind.google/blog/rss.xml' },
-      { name:'Google Research',   url:'https://research.google/blog/rss/' },
-      { name:'Meta AI',           url:'https://ai.meta.com/blog/feed/' },
-      { name:'Microsoft Research',url:'https://www.microsoft.com/en-us/research/feed/' },
-      { name:'OpenAI',            url:'https://openai.com/news/rss.xml' },
-      { name:'Anthropic',         url:'https://www.anthropic.com/news/rss' },
-      { name:'Hugging Face',      url:'https://huggingface.co/blog/feed.xml' },
-      // Industry research
-      { name:'Apple ML Research', url:'https://machinelearning.apple.com/rss.xml' },
-      { name:'Amazon Science',    url:'https://www.amazon.science/index.rss' },
-      { name:'Uber Engineering',  url:'https://www.uber.com/en-US/blog/engineering/feed/' },
-      { name:'Netflix TechBlog',  url:'https://netflixtechblog.com/feed' },
-      { name:'Spotify R&D',       url:'https://engineering.atspotify.com/feed/' },
-      { name:'LinkedIn Engineering',url:'https://engineering.linkedin.com/blog.rss.html' },
-      // Academic/community
-      { name:'The Gradient',      url:'https://thegradient.pub/rss/' },
-      { name:'Distill',           url:'https://distill.pub/rss.xml' },
-      { name:'AI Alignment Forum',url:'https://www.alignmentforum.org/feed.xml' },
-      { name:'Ahead of AI',       url:'https://magazine.sebastianraschka.com/feed' },
+      // Top lab research blogs
+      { name:'Google DeepMind',        url:'https://deepmind.google/blog/rss.xml' },
+      { name:'Google Research',        url:'https://research.google/blog/rss/' },
+      { name:'Meta AI (FAIR)',         url:'https://ai.meta.com/blog/feed/' },
+      { name:'Microsoft Research',     url:'https://www.microsoft.com/en-us/research/feed/' },
+      { name:'OpenAI Research',        url:'https://openai.com/news/rss.xml' },
+      { name:'Anthropic Research',     url:'https://www.anthropic.com/news/rss' },
+      { name:'Apple ML Research',      url:'https://machinelearning.apple.com/rss.xml' },
+      { name:'Hugging Face Blog',      url:'https://huggingface.co/blog/feed.xml' },
+      { name:'Amazon Science',         url:'https://www.amazon.science/index.rss' },
+      // Expert practitioner blogs (from resources doc)
+      { name:'Lil\'Log (Lilian Weng)', url:'https://lilianweng.github.io/index.xml' },
+      { name:'Ahead of AI (Raschka)',  url:'https://magazine.sebastianraschka.com/feed' },
+      { name:'The Gradient',           url:'https://thegradient.pub/rss/' },
+      { name:'Distill.pub',            url:'https://distill.pub/rss.xml' },
+      // Newsletters with RSS
+      { name:'Import AI (Jack Clark)', url:'https://importai.substack.com/feed' },
+      { name:'Last Week in AI',        url:'https://lastweekin.ai/feed' },
     ],
     'ai-finance': [
-      { name:'Two Sigma',         url:'https://www.twosigma.com/articles/feed/' },
-      { name:'Man AHL',           url:'https://www.man.com/maninstitute/rss' },
-      { name:'Alpha Architect',   url:'https://alphaarchitect.com/feed/' },
-      { name:'Quantpedia',        url:'https://quantpedia.com/feed/' },
-      { name:'JP Morgan Research',url:'https://www.jpmorgan.com/technology/artificial-intelligence/feed' },
-      { name:'Goldman Sachs AI',  url:'https://www.goldmansachs.com/intelligence/rss.xml' },
+      // Premier systematic/ML finance research sources
+      { name:'Two Sigma Insights',     url:'https://www.twosigma.com/topic/insights/feed/' },
+      { name:'Man Institute (AHL)',    url:'https://www.man.com/maninstitute/rss' },
+      { name:'AQR Insights',           url:'https://www.aqr.com/Insights/Research/rss' },
+      { name:'Alpha Architect',        url:'https://alphaarchitect.com/feed/' },
+      { name:'Hudson & Thames',        url:'https://hudsonthames.org/blog/feed/' },
+      { name:'Flirting With Models',   url:'https://blog.thinknewfound.com/feed/' },
+      { name:'Quantocracy',            url:'https://quantocracy.com/feed/' },
+      // Finance-specific arXiv-like preprints via blog
+      { name:'Goldman Sachs Intelligence', url:'https://www.goldmansachs.com/intelligence/rss.xml' },
     ],
     'quant': [
-      { name:'Two Sigma',         url:'https://www.twosigma.com/articles/feed/' },
-      { name:'Man AHL',           url:'https://www.man.com/maninstitute/rss' },
-      { name:'Alpha Architect',   url:'https://alphaarchitect.com/feed/' },
-      { name:'Quantpedia',        url:'https://quantpedia.com/feed/' },
-      { name:'SSRN Quant Finance',url:'https://papers.ssrn.com/sol3/Jeljour_results.cfm?form_name=journalBrowse&journal_id=1510&Network=no&SortOrder=ab_approval_date&StartAt=1&utm_source=rss&utm_medium=rss' },
-      { name:'AQR Insights',      url:'https://www.aqr.com/Insights/Research/rss' },
+      { name:'Two Sigma Insights',     url:'https://www.twosigma.com/topic/insights/feed/' },
+      { name:'Man Institute (AHL)',    url:'https://www.man.com/maninstitute/rss' },
+      { name:'AQR Insights',           url:'https://www.aqr.com/Insights/Research/rss' },
+      { name:'Alpha Architect',        url:'https://alphaarchitect.com/feed/' },
+      { name:'Flirting With Models',   url:'https://blog.thinknewfound.com/feed/' },
+      { name:'Quantocracy',            url:'https://quantocracy.com/feed/' },
+      { name:'QuantStart',             url:'https://www.quantstart.com/articles/feed/' },
+      { name:'Ernie Chan Blog',        url:'https://epchan.blogspot.com/feeds/posts/default' },
     ],
     'hft': [
-      { name:'Two Sigma',         url:'https://www.twosigma.com/articles/feed/' },
-      { name:'Man AHL',           url:'https://www.man.com/maninstitute/rss' },
-      { name:'Virtu Financial Blog',url:'https://www.virtu.com/rss.xml' },
+      // Elite HFT practitioner and research blogs
+      { name:'Jane Street Tech Blog',  url:'https://blog.janestreet.com/feed.xml' },
+      { name:'Databento Blog',         url:'https://databento.com/blog/rss.xml' },
+      { name:'Two Sigma Insights',     url:'https://www.twosigma.com/topic/insights/feed/' },
+      { name:'Man Institute (AHL)',    url:'https://www.man.com/maninstitute/rss' },
+      { name:'Matt Godbolt\'s Blog',   url:'https://xania.org/feed.xml' },
+      { name:'Quantocracy',            url:'https://quantocracy.com/feed/' },
     ],
     'computing': [
-      { name:'NVIDIA Research',   url:'https://research.nvidia.com/rss.xml' },
-      { name:'Google Research',   url:'https://research.google/blog/rss/' },
-      { name:'Microsoft Research',url:'https://www.microsoft.com/en-us/research/feed/' },
-      { name:'AWS Architecture',  url:'https://aws.amazon.com/blogs/architecture/feed/' },
-      { name:'ACM TechNews',      url:'https://technews.acm.org/rss.xml' },
-      { name:'The Morning Paper', url:'https://blog.acolyer.org/feed/' },
-      { name:'Chips and Cheese',  url:'https://chipsandcheese.com/feed/' },
-      { name:'Databricks Blog',   url:'https://www.databricks.com/feed' },
+      // Top arch/systems blogs from resources doc
+      { name:'Chips and Cheese',       url:'https://chipsandcheese.com/feed/' },
+      { name:'Google Research',        url:'https://research.google/blog/rss/' },
+      { name:'Microsoft Research',     url:'https://www.microsoft.com/en-us/research/feed/' },
+      { name:'Arm Developer Blog',     url:'https://community.arm.com/arm-community-blogs/rss/' },
+      { name:'Cerebras Blog',          url:'https://www.cerebras.net/blog/rss.xml' },
+      { name:'IEEE Spectrum',          url:'https://spectrum.ieee.org/feeds/feed.rss' },
+      { name:'The Morning Paper',      url:'https://blog.acolyer.org/feed/' },
+      { name:'AWS Architecture Blog',  url:'https://aws.amazon.com/blogs/architecture/feed/' },
     ],
     'vlsi': [
-      { name:'SemiAnalysis',      url:'https://www.semianalysis.com/feed' },
-      { name:'Chips and Cheese',  url:'https://chipsandcheese.com/feed/' },
-      { name:'EETimes',           url:'https://www.eetimes.com/feed/' },
-      { name:'Synopsys Blog',     url:'https://news.synopsys.com/rss/pages/releases.rss' },
-      { name:'Cadence Blog',      url:'https://community.cadence.com/cadence_blogs_8/rss' },
-      { name:'IEEE Spectrum',     url:'https://spectrum.ieee.org/feeds/feed.rss' },
+      // EDA, physical design, process — top sources from resources doc
+      { name:'SemiAnalysis',           url:'https://www.semianalysis.com/feed' },
+      { name:'Semiengineering',        url:'https://semiengineering.com/feed/' },
+      { name:'Chips and Cheese',       url:'https://chipsandcheese.com/feed/' },
+      { name:'IEEE Spectrum',          url:'https://spectrum.ieee.org/feeds/feed.rss' },
+      { name:'EETimes',                url:'https://www.eetimes.com/feed/' },
+      { name:'Synopsys Chip Design',   url:'https://www.synopsys.com/blogs/chip-design/rss.xml' },
+      { name:'Cadence Community',      url:'https://community.cadence.com/cadence_blogs_8/rss' },
     ],
     'ams': [
-      { name:'IEEE Spectrum',     url:'https://spectrum.ieee.org/feeds/feed.rss' },
-      { name:'EETimes',           url:'https://www.eetimes.com/feed/' },
-      { name:'SemiAnalysis',      url:'https://www.semianalysis.com/feed' },
-      { name:'EDN Network',       url:'https://www.edn.com/feed/' },
-      { name:'Analog Devices Blog',url:'https://www.analog.com/en/analog-dialogue/articles/rss.xml' },
-      { name:'Texas Instruments', url:'https://e2e.ti.com/blogs_/b/analogwire/rss.aspx' },
+      // AMS/RF — precisely the sources from resources doc, no generic tech noise
+      { name:'IEEE Spectrum',          url:'https://spectrum.ieee.org/feeds/feed.rss' },
+      { name:'EDN Network',            url:'https://www.edn.com/feed/' },
+      { name:'EETimes Analog',         url:'https://www.eetimes.com/category/analog/feed/' },
+      { name:'Electronic Design',      url:'https://www.electronicdesign.com/rss.xml' },
+      { name:'Semiengineering',        url:'https://semiengineering.com/feed/' },
+      { name:'Analog Devices Dialogue',url:'https://www.analog.com/en/analog-dialogue/articles/rss.xml' },
+      { name:'SemiAnalysis',           url:'https://www.semianalysis.com/feed' },
     ],
     'serdes': [
-      { name:'SemiAnalysis',      url:'https://www.semianalysis.com/feed' },
-      { name:'IEEE Spectrum',     url:'https://spectrum.ieee.org/feeds/feed.rss' },
-      { name:'EETimes',           url:'https://www.eetimes.com/feed/' },
-      { name:'EDN Network',       url:'https://www.edn.com/feed/' },
-      { name:'Synopsys Blog',     url:'https://news.synopsys.com/rss/pages/releases.rss' },
+      // Wireline/SerDes — DesignCon, SI Journal, OIF, vendor blogs
+      { name:'Signal Integrity Journal',url:'https://www.signalintegrityjournal.com/rss/articles' },
+      { name:'Synopsys Chip Design',   url:'https://www.synopsys.com/blogs/chip-design/rss.xml' },
+      { name:'Cadence SI/PI Blog',     url:'https://community.cadence.com/cadence_blogs_8/b/cds_signal_power_integrity/rss' },
+      { name:'IEEE Spectrum',          url:'https://spectrum.ieee.org/feeds/feed.rss' },
+      { name:'SemiAnalysis',           url:'https://www.semianalysis.com/feed' },
+      { name:'EETimes',                url:'https://www.eetimes.com/feed/' },
+      { name:'EDN Network',            url:'https://www.edn.com/feed/' },
     ],
     'ai-chips': [
-      { name:'SemiAnalysis',      url:'https://www.semianalysis.com/feed' },
-      { name:'NVIDIA Research',   url:'https://research.nvidia.com/rss.xml' },
-      { name:'Google Research',   url:'https://research.google/blog/rss/' },
-      { name:'Chips and Cheese',  url:'https://chipsandcheese.com/feed/' },
-      { name:'IEEE Spectrum',     url:'https://spectrum.ieee.org/feeds/feed.rss' },
-      { name:'Apple ML Research', url:'https://machinelearning.apple.com/rss.xml' },
-      { name:'Anandtech',         url:'https://www.anandtech.com/rss/' },
-      { name:'NextPlatform',      url:'https://www.nextplatform.com/feed/' },
+      // AI chips — SemiAnalysis, Hot Chips, NVIDIA, Tenstorrent, Groq, Cerebras
+      { name:'SemiAnalysis',           url:'https://www.semianalysis.com/feed' },
+      { name:'NVIDIA Tech Blog',       url:'https://developer.nvidia.com/blog/feed/' },
+      { name:'Tenstorrent Blog',       url:'https://tenstorrent.com/blog/rss' },
+      { name:'Groq Blog',              url:'https://groq.com/blog/feed/' },
+      { name:'Cerebras Blog',          url:'https://www.cerebras.net/blog/rss.xml' },
+      { name:'Chips and Cheese',       url:'https://chipsandcheese.com/feed/' },
+      { name:'The Next Platform',      url:'https://www.nextplatform.com/feed/' },
+      { name:'Semiengineering',        url:'https://semiengineering.com/feed/' },
+      { name:'Google Research',        url:'https://research.google/blog/rss/' },
+      { name:'IEEE Spectrum',          url:'https://spectrum.ieee.org/feeds/feed.rss' },
     ],
   };
 
-  // CrossRef queries per domain — specific enough to get relevant results
+  // CrossRef queries — tight, venue-biased to pull from JMLR/NeurIPS/ISSCC/ISCA/etc.
   const CROSSREF_QUERIES = {
-    'ai':        'deep learning neural network transformer attention mechanism',
-    'ai-finance':'machine learning algorithmic trading financial prediction neural',
-    'quant':     'quantitative finance factor model systematic trading portfolio optimization',
-    'hft':       'high frequency trading market microstructure order book execution',
-    'computing': 'computer architecture processor cache memory hierarchy performance',
-    'vlsi':      'VLSI integrated circuit physical design placement routing EDA',
-    'ams':       'analog-to-digital converter ADC DAC phase-locked loop PLL amplifier CMOS ISSCC',
-    'serdes':    'high speed serial link CDR clock data recovery PAM4 equalizer transceiver',
-    'ai-chips':  'deep learning accelerator neural processing unit systolic array inference',
+    'ai':        'neural network transformer NeurIPS ICML ICLR JMLR deep learning alignment',
+    'ai-finance':'machine learning finance Journal of Financial Data Science quantitative trading',
+    'quant':     'quantitative finance factor model portfolio Risk Journal of Portfolio Management',
+    'hft':       'market microstructure high frequency trading order book Journal of Trading',
+    'computing': 'computer architecture ISCA MICRO HPCA processor cache memory IEEE Micro',
+    'vlsi':      'VLSI physical design EDA placement routing DAC ICCAD IEEE TCAD',
+    'ams':       'ADC DAC PLL analog circuit ISSCC JSSC CICC ESSCIRC CMOS amplifier',
+    'serdes':    'SerDes CDR equalization PAM4 wireline transceiver ISSCC DesignCon jitter',
+    'ai-chips':  'neural accelerator NPU systolic array ISSCC Hot Chips compute-in-memory',
   };
 
   // Domain keyword filters — used to post-filter CrossRef and OpenAlex (which return broad results)
@@ -818,19 +865,21 @@
     'ai-chips':  ['neural network accelerator','npu','compute-in-memory','chiplet','dataflow architecture','systolic array','inference accelerator','sparse neural','quantization hardware','neural hardware','pim','in-memory computing','eyeriss','tpu','wafer scale','hardware ml','ai processor','deep learning hardware','edge inference'],
   };
 
-  const EXPLAINER_SYSTEM_PROMPT = `You are a research intelligence analyst for a technical audience (engineers and researchers).
+  const EXPLAINER_SYSTEM_PROMPT = `You are a research intelligence analyst. Your audience are domain experts: IC designers (ISSCC/JSSC/TCAS), ML researchers (NeurIPS/ICML/ICLR), computer architects (ISCA/MICRO/HPCA), and quant researchers (AQR/Man/Two Sigma caliber).
 Given a paper's metadata and abstract, produce a JSON object with exactly these three fields:
 
 {
-  "what_doing": "2-3 sentences describing what the authors built, proved, measured, or demonstrated. Be specific. Start with a concrete verb: 'The authors build...', 'This work demonstrates...', 'The team trains...'",
-  "problem_solved": "1-2 sentences on what specific gap or pain point this addresses. Name the prior state of the art if inferable.",
-  "key_contribution": "1-2 sentences on the specific advance. Include numbers if available (e.g., '3x lower power', '94.2% accuracy', '0.5 LSB INL')."
+  "what_doing": "2-3 sentences describing what the authors built, proved, measured, or demonstrated. Be specific and technical. Start with a concrete verb: 'The authors propose...', 'This work demonstrates...', 'The team trains...'",
+  "problem_solved": "1-2 sentences on what specific gap or pain point this addresses. Name the prior state of the art or benchmark if inferable (e.g., 'Prior SAR ADCs at this speed consumed...', 'ResNet-50 achieves...', 'Classical factor models fail to...').",
+  "key_contribution": "1-2 sentences on the specific advance. Always include numbers if present in abstract (e.g., '3× lower power', '94.2% accuracy on ImageNet', '0.5 LSB INL at 12b', '47 dB SFDR', 'Sharpe ratio of 1.8 in backtest')."
 }
 
 Rules:
 - Return ONLY valid JSON. No markdown, no backticks, no preamble, no trailing text.
 - If abstract is insufficient, write "Insufficient abstract detail to determine."
-- Preserve domain terms: gm/ID, CDR, Sharpe, ENOB, PAM4 — the reader is a domain expert.`;
+- Preserve all domain terms exactly: gm/ID, Ron/gm, CDR, ENOB, SNDR, PAM4, RLHF, Sharpe, HRP, CXL, HBM — the reader is a domain expert who will notice sloppy paraphrasing.
+- For finance papers, always name the strategy type (momentum, mean-reversion, factor, pairs trading) if determinable.
+- For hardware papers, always state the process node, supply voltage, or figure-of-merit if stated.`;
 
   /* ════════════════════════════════════════════════════════
      B · STATE
@@ -1050,21 +1099,22 @@ Rules:
   }
 
   async function fetchOpenAlex(domain) {
-    // Use keyword search per domain rather than broad concept IDs for better precision
+    // Keyword search tuned per domain — also filter to journals/proceedings for quality
     const OPENALEX_QUERIES = {
-      'ai':        'machine learning deep learning transformer neural network',
-      'ai-finance':'machine learning finance trading risk',
-      'quant':     'quantitative finance factor model portfolio',
-      'hft':       'high frequency trading market microstructure order book',
-      'computing': 'computer architecture processor memory hierarchy',
-      'vlsi':      'VLSI EDA physical design place route',
-      'ams':       'analog circuit ADC DAC PLL amplifier CMOS ISSCC',
-      'serdes':    'SerDes CDR equalization PAM4 wireline transceiver',
-      'ai-chips':  'neural network accelerator NPU deep learning hardware',
+      'ai':        'transformer large language model NeurIPS ICML ICLR deep learning alignment',
+      'ai-finance':'machine learning quantitative finance trading risk neural network financial',
+      'quant':     'quantitative finance factor model portfolio systematic momentum sharpe',
+      'hft':       'high frequency trading market microstructure order book latency execution',
+      'computing': 'computer architecture processor cache memory ISCA MICRO HPCA ASPLOS',
+      'vlsi':      'VLSI EDA physical design placement routing DAC ICCAD timing closure',
+      'ams':       'ADC DAC PLL amplifier analog CMOS ISSCC JSSC CICC delta-sigma SAR',
+      'serdes':    'SerDes CDR equalization PAM4 wireline transceiver jitter ISSCC DesignCon',
+      'ai-chips':  'neural network accelerator NPU systolic array compute-in-memory ISSCC Hot Chips',
     };
     const q = OPENALEX_QUERIES[domain];
     if (!q) return [];
-    const url = `https://api.openalex.org/works?search=${encodeURIComponent(q)}&filter=type:article&sort=publication_date:desc&per_page=25&select=id,title,authorships,publication_date,publication_year,abstract_inverted_index,cited_by_count,open_access,primary_location,host_venue,doi,concepts`;
+    // Filter to article + proceedings types, sort by recency
+    const url = `https://api.openalex.org/works?search=${encodeURIComponent(q)}&filter=type:article|type:proceedings-article&sort=publication_date:desc&per_page=25&select=id,title,authorships,publication_date,publication_year,abstract_inverted_index,cited_by_count,open_access,primary_location,host_venue,doi,concepts`;
     try {
       const resp = await fetchTimeout(url, {}, 15000);
       if (!resp.ok) throw new Error(`OpenAlex HTTP ${resp.status}`);
