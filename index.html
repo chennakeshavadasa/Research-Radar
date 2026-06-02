@@ -475,9 +475,7 @@
           <span class="ctrl-lbl">NARROW</span>
           <button class="ctrl-btn active" data-src="all">ALL</button>
           <button class="ctrl-btn" data-src="arxiv">arXiv</button>
-          <button class="ctrl-btn" data-src="s2">S2</button>
-          <button class="ctrl-btn" data-src="openalex">OpenAlex</button>
-          <button class="ctrl-btn" data-src="crossref">CrossRef</button>
+          <button class="ctrl-btn" data-src="s2">PROFS</button>
           <button class="ctrl-btn" data-src="blog">BLOG</button>
           <button class="ctrl-btn" data-src="scholar">Scholar</button>
         <div class="ctrl-sep"></div>
@@ -583,19 +581,6 @@
     'serdes':    ['eess.SP','eess.SY','cs.NI','cs.AR'],
     // AI Chips — hardware architecture + ML + emerging tech
     'ai-chips':  ['cs.AR','cs.LG','cs.ET','cs.NE','cs.DC'],
-  };
-
-  // S2 search queries — tuned to surface top-venue papers (NeurIPS, ICML, ISSCC, ISCA, etc.)
-  const S2_QUERIES = {
-    'ai':        'transformer large language model RLHF alignment NeurIPS ICML ICLR diffusion generative',
-    'ai-finance':'machine learning quantitative finance NLP trading credit risk portfolio deep learning',
-    'quant':     'factor model systematic trading momentum mean reversion portfolio construction alpha signal',
-    'hft':       'high frequency trading market microstructure order book latency execution adverse selection',
-    'computing': 'computer architecture ISCA MICRO HPCA processor cache memory hierarchy ASPLOS compiler',
-    'vlsi':      'VLSI EDA physical design place route timing closure DAC ICCAD cell library power grid',
-    'ams':       'ADC DAC PLL amplifier CMOS ISSCC JSSC CICC ESSCIRC bandgap delta-sigma SAR noise',
-    'serdes':    'SerDes CDR equalization PAM4 wireline transceiver ISSCC DesignCon jitter eye diagram',
-    'ai-chips':  'AI accelerator NPU systolic array compute-in-memory ISSCC Hot Chips chiplet inference hardware',
   };
 
   // Semantic Scholar author IDs — top researchers per domain, drawn from resources doc
@@ -838,18 +823,88 @@
     ],
   };
 
-  // CrossRef queries — tight, venue-biased to pull from JMLR/NeurIPS/ISSCC/ISCA/etc.
-  const CROSSREF_QUERIES = {
-    'ai':        'neural network transformer NeurIPS ICML ICLR JMLR deep learning alignment',
-    'ai-finance':'machine learning finance Journal of Financial Data Science quantitative trading',
-    'quant':     'quantitative finance factor model portfolio Risk Journal of Portfolio Management',
-    'hft':       'market microstructure high frequency trading order book Journal of Trading',
-    'computing': 'computer architecture ISCA MICRO HPCA processor cache memory IEEE Micro',
-    'vlsi':      'VLSI physical design EDA placement routing DAC ICCAD IEEE TCAD',
-    'ams':       'ADC DAC PLL analog circuit ISSCC JSSC CICC ESSCIRC CMOS amplifier',
-    'serdes':    'SerDes CDR equalization PAM4 wireline transceiver ISSCC DesignCon jitter',
-    'ai-chips':  'neural accelerator NPU systolic array ISSCC Hot Chips compute-in-memory',
+  // Venue allowlists — ONLY papers from these venues pass through for professor S2 papers
+  // Resources: ISSCC, JSSC, NeurIPS, ICML, ISCA, MICRO, etc. from resources_v2.md
+  const VENUE_ALLOWLISTS = {
+    'ai': new Set([
+      'neurips','nips','icml','iclr','cvpr','eccv','iccv','emnlp','acl','naacl','aaai','aistats','uai',
+      'jmlr','journal of machine learning research',
+      'tpami','ieee transactions on pattern analysis',
+      'neural networks and learning systems','tnnls',
+      'nature machine intelligence','nature communications',
+      'artificial intelligence','foundations and trends',
+      'science','nature','cell','proceedings of the national academy',
+    ]),
+    'ai-finance': new Set([
+      'journal of financial data science','jfds',
+      'quantitative finance','journal of portfolio management',
+      'journal of financial economics','review of financial studies',
+      'mathematical finance','finance and stochastics',
+      'journal of finance','review of financial studies',
+      'q-fin','ssrn','management science','operations research',
+      'risk','journal of risk',
+    ]),
+    'quant': new Set([
+      'journal of portfolio management','quantitative finance',
+      'journal of financial data science','risk','risk.net',
+      'journal of systematic trading','journal of computational finance',
+      'wilmott','journal of finance','review of financial studies',
+      'management science','operations research','ssrn',
+      'mathematical finance','journal of financial markets',
+    ]),
+    'hft': new Set([
+      'journal of trading','journal of financial markets',
+      'review of asset pricing studies','journal of finance',
+      'review of financial studies','journal of financial economics',
+      'management science','operations research','ssrn',
+      'quantitative finance','market microstructure',
+    ]),
+    'computing': new Set([
+      'isca','micro','hpca','asplos','sc','supercomputing','osdi','sosp','eurosys',
+      'ieee micro','acm tocs','acm taco','ieee transactions on computers',
+      'ieee tcad','acm computing surveys','ieeemicro',
+      'computer architecture','sigarch','sigops',
+      'usenix','atc','fast','nsdi','sigcomm','vldb','sigmod',
+    ]),
+    'vlsi': new Set([
+      'dac','iccad','ispd','date','aspdac','fpl','fccm',
+      'ieee tcad','transactions on computer-aided design',
+      'ieee transactions on vlsi','tvlsi',
+      'integration the vlsi journal','microelectronics journal',
+      'semiengineering',
+    ]),
+    'ams': new Set([
+      'isscc','jssc','journal of solid-state circuits',
+      'tcas','tcas-i','tcas-ii','transactions on circuits and systems',
+      'cicc','esscirc','vlsi','vlsi symposium',
+      'rfic','ims','ieee tmtt','microwave theory',
+      'analog integrated circuits and signal processing',
+      'ieee solid-state circuits','solid-state circuits letters',
+      'jeds','ieee jeds',
+    ]),
+    'serdes': new Set([
+      'isscc','jssc','journal of solid-state circuits',
+      'designcon','ofc','ecoc','tcas','cicc',
+      'ieee transactions on microwave','tmtt',
+      'signal integrity journal','ieee access',
+      'journal of lightwave technology',
+    ]),
+    'ai-chips': new Set([
+      'isscc','jssc','journal of solid-state circuits',
+      'hot chips','mlsys','isca','micro','hpca','asplos',
+      'iccad','dac','vlsi','vlsi symposium',
+      'tpami','ieee micro','tc','ieee transactions on computers',
+    ]),
   };
+
+  // Check if a paper's venue is in the allowlist for this domain
+  function isAllowedVenue(venue, domain) {
+    if (!venue) return false;
+    const vl = venue.toLowerCase();
+    const allowed = VENUE_ALLOWLISTS[domain];
+    if (!allowed) return true; // no list = pass all
+    return [...allowed].some(v => vl.includes(v));
+  }
 
   // Domain keyword filters — used to post-filter CrossRef and OpenAlex (which return broad results)
   // arXiv, S2, blogs, and Scholar are already domain-targeted and skip this filter
@@ -903,7 +958,7 @@ Rules:
     fetchStartTime: 0,
     savedIds: new Set(),
     serpApiKey: '',     // SerpApi key — get free 100/mo at serpapi.com
-    fetchProgress: { arxiv:null, s2:null, openalex:null, crossref:null, blog:null, scholar:null },
+    fetchProgress: { arxiv:null, s2:null, blog:null, scholar:null },
     yearFilter: 'all',
     fetchEpoch: 0,      // Incremented on each new domain fetch to cancel stale in-flight updates
   };
@@ -1015,25 +1070,18 @@ Rules:
     };
   }
 
-  async function fetchSemanticScholar(domain) {
-    const query = encodeURIComponent(S2_QUERIES[domain]);
-    const fields = 'paperId,title,authors,year,abstract,venue,publicationDate,citationCount,influentialCitationCount,openAccessPdf';
-    // 50 results instead of 25
-    const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${query}&fields=${fields}&limit=20&offset=0`;
-    const resp = await fetchTimeout(url, {}, 15000);
-    if (resp.status === 429) throw new Error('S2_RATE_LIMIT');
-    if (!resp.ok) throw new Error(`S2 HTTP ${resp.status}`);
-    const data = await resp.json();
-    return (data.data || []).filter(p => p.abstract).map(p => parseS2Paper(p, domain));
-  }
-
   async function fetchAuthorPapers(authorId, domain) {
     const fields = 'paperId,title,year,venue,publicationDate,citationCount,influentialCitationCount,abstract,openAccessPdf,authors';
-    const url = `https://api.semanticscholar.org/graph/v1/author/${authorId}/papers?fields=${fields}&limit=15`;
+    // Sort by publication date descending, fetch more to survive venue filtering
+    const url = `https://api.semanticscholar.org/graph/v1/author/${authorId}/papers?fields=${fields}&limit=50&sort=publicationDate:desc`;
     const resp = await fetchTimeout(url, {}, 12000);
+    if (resp.status === 429) throw new Error('S2_RATE_LIMIT');
     if (!resp.ok) return [];
     const data = await resp.json();
-    return (data.data || []).filter(p => p.abstract).map(p => parseS2Paper(p, domain));
+    const cutoffYear = new Date().getFullYear() - 6; // keep last 6 years
+    return (data.data || [])
+      .filter(p => p.abstract && p.title && (p.year || 0) >= cutoffYear)
+      .map(p => parseS2Paper(p, domain));
   }
 
   async function fetchOneBlog(feed, domain) {
@@ -1066,112 +1114,10 @@ Rules:
   }
 
   /* ── OpenAlex ── 250M papers, free, no auth, CORS: * */
-  function parseOpenAlexWork(w, domain) {
-    // OpenAlex abstract is stored as inverted index — reconstruct it
-    let abstract = '';
-    if (w.abstract_inverted_index) {
-      try {
-        const words = [];
-        Object.entries(w.abstract_inverted_index).forEach(([word, positions]) => {
-          positions.forEach(pos => { words[pos] = word; });
-        });
-        abstract = words.filter(Boolean).join(' ');
-      } catch (_) {}
-    }
-    const authors = (w.authorships || []).slice(0, 10).map(a => a.author?.display_name || '').filter(Boolean);
-    const venue = w.primary_location?.source?.display_name || w.host_venue?.display_name || 'OpenAlex';
-    const doi = w.doi ? `https://doi.org/${w.doi.replace('https://doi.org/','')}` : null;
-    const pdfUrl = w.open_access?.oa_url || w.primary_location?.pdf_url || null;
-    return {
-      id: w.id || `oa-${Math.random()}`,
-      source: 'openalex', domain,
-      title: (w.title || '').replace(/<[^>]+>/g,'').trim(),
-      authors, abstract, venue,
-      published: w.publication_date || `${w.publication_year||2024}-01-01`,
-      year: w.publication_year || null,
-      url: doi || w.id || '',
-      pdfUrl,
-      isOpenAccess: w.open_access?.is_oa || false,
-      citationCount: w.cited_by_count || 0,
-      influentialCitations: 0,
-      categories: (w.concepts||[]).slice(0,4).map(c => c.display_name),
-    };
-  }
 
-  async function fetchOpenAlex(domain) {
-    // Keyword search tuned per domain — also filter to journals/proceedings for quality
-    const OPENALEX_QUERIES = {
-      'ai':        'transformer large language model NeurIPS ICML ICLR deep learning alignment',
-      'ai-finance':'machine learning quantitative finance trading risk neural network financial',
-      'quant':     'quantitative finance factor model portfolio systematic momentum sharpe',
-      'hft':       'high frequency trading market microstructure order book latency execution',
-      'computing': 'computer architecture processor cache memory ISCA MICRO HPCA ASPLOS',
-      'vlsi':      'VLSI EDA physical design placement routing DAC ICCAD timing closure',
-      'ams':       'ADC DAC PLL amplifier analog CMOS ISSCC JSSC CICC delta-sigma SAR',
-      'serdes':    'SerDes CDR equalization PAM4 wireline transceiver jitter ISSCC DesignCon',
-      'ai-chips':  'neural network accelerator NPU systolic array compute-in-memory ISSCC Hot Chips',
-    };
-    const q = OPENALEX_QUERIES[domain];
-    if (!q) return [];
-    // Filter to article + proceedings types, sort by recency
-    const url = `https://api.openalex.org/works?search=${encodeURIComponent(q)}&filter=type:article|type:proceedings-article&sort=publication_date:desc&per_page=25&select=id,title,authorships,publication_date,publication_year,abstract_inverted_index,cited_by_count,open_access,primary_location,host_venue,doi,concepts`;
-    try {
-      const resp = await fetchTimeout(url, {}, 15000);
-      if (!resp.ok) throw new Error(`OpenAlex HTTP ${resp.status}`);
-      const data = await resp.json();
-      return (data.results || [])
-        .filter(w => w.title && w.title.length > 10)
-        .map(w => parseOpenAlexWork(w, domain));
-    } catch (e) {
-      console.warn('OpenAlex failed:', e.message);
-      return [];
-    }
-  }
 
   /* ── CrossRef ── 130M papers, free, no auth, CORS: * */
-  function parseCrossRefWork(w, domain) {
-    const authors = (w.author||[]).slice(0,10).map(a =>
-      [a.given, a.family].filter(Boolean).join(' ')
-    ).filter(Boolean);
-    const venue = (w['container-title']||[])[0] || w.publisher || 'CrossRef';
-    const issued = w.issued?.['date-parts']?.[0];
-    const year = issued?.[0] || null;
-    const month = issued?.[1] ? String(issued[1]).padStart(2,'0') : '01';
-    const day = issued?.[2] ? String(issued[2]).padStart(2,'0') : '01';
-    const published = year ? `${year}-${month}-${day}` : '2024-01-01';
-    const doi = w.DOI ? `https://doi.org/${w.DOI}` : '';
-    return {
-      id: `cr-${w.DOI || Math.random()}`,
-      source: 'crossref', domain,
-      title: (Array.isArray(w.title) ? w.title[0] : w.title || '').replace(/<[^>]+>/g,'').trim(),
-      authors,
-      abstract: (w.abstract || '').replace(/<[^>]+>/g,'').substring(0,1200).trim(),
-      venue, published, year,
-      url: doi || w.URL || '',
-      pdfUrl: w.link?.find(l => l['content-type']==='application/pdf')?.URL || null,
-      isOpenAccess: false,
-      citationCount: w['is-referenced-by-count'] || 0,
-      influentialCitations: 0,
-      categories: w.subject || [],
-    };
-  }
 
-  async function fetchCrossRef(domain) {
-    const q = encodeURIComponent(CROSSREF_QUERIES[domain] || '');
-    // polite pool: add mailto for better rate limits
-    const url = `https://api.crossref.org/works?query=${q}&rows=20&sort=published&order=desc&select=DOI,title,author,issued,abstract,URL,is-referenced-by-count,container-title,publisher,subject,link&mailto=research.radar@example.com`;
-    try {
-      const resp = await fetchTimeout(url, {}, 15000);
-      if (!resp.ok) throw new Error(`CrossRef HTTP ${resp.status}`);
-      const data = await resp.json();
-      return (data.message?.items || [])
-        .filter(w => w.title?.length && (Array.isArray(w.title) ? w.title[0] : w.title))
-        .map(w => parseCrossRefWork(w, domain));
-    } catch (e) {
-      console.warn('CrossRef failed:', e.message);
-      return [];
-    }
-  }
 
 
   /* ── SerpApi Google Scholar Author API ──
@@ -1251,39 +1197,52 @@ Rules:
     return all;
   }
 
-  // Apply domain keyword relevance filter post-fetch
+  // Filter papers to curated sources only:
+  // - arXiv: already domain-specific by category
+  // - blog: pre-curated feeds from resources_v2.md
+  // - scholar: curated author lists
+  // - s2 (prof papers): must be from an approved venue; unknown/junk venues are dropped
   function applyDomainFilter(papers, domain) {
     const kws = DOMAIN_KEYWORDS[domain];
-    if (!kws) return papers;
-    const kwl = kws.map(k => k.toLowerCase());
+    const kwl = kws ? kws.map(k => k.toLowerCase()) : [];
     return papers.filter(p => {
-      if (p.source === 'blog') return true;   // pre-curated per domain
-      if (p.source === 'arxiv') return true;  // filtered by arXiv categories
-      if (p.source === 's2') return true;     // S2 query + author papers are domain-specific
-      if (p.source === 'scholar') return true;// Scholar author papers are domain-specific
-      // CrossRef and OpenAlex: strict keyword filter, no fallback
-      const t = (p.title + ' ' + (p.abstract||'') + ' ' + (p.venue||'')).toLowerCase();
-      return kwl.some(k => t.includes(k));
+      if (p.source === 'blog') return true;
+      if (p.source === 'arxiv') return true;
+      if (p.source === 'scholar') return true;
+      if (p.source === 's2') {
+        // Venue in allowlist → keep
+        if (isAllowedVenue(p.venue, domain)) return true;
+        // No venue or unknown → drop
+        if (!p.venue || p.venue === 'Unknown venue' || p.venue === '') return false;
+        // Fallback: keyword match on title only (strict)
+        const t = (p.title + ' ' + (p.venue||'')).toLowerCase();
+        return kwl.length > 0 && kwl.some(k => t.includes(k));
+      }
+      return false; // drop openalex, crossref — eliminated from pipeline
     });
   }
 
-  /* Progressive streaming — 6 sources fire simultaneously, each streams in as it arrives */
+  /* ════════════════════════════════════════════════════════
+     FETCH PIPELINE — curated sources only:
+     1. arXiv        — by domain categories (already specific)
+     2. S2 Profs     — top professor papers, venue-filtered to allowlist
+     3. Blogs        — curated RSS feeds from resources_v2.md
+     4. Scholar      — curated author papers via SerpApi (optional)
+     No S2 general search, no OpenAlex, no CrossRef.
+  ════════════════════════════════════════════════════════ */
   async function fetchAllSourcesProgressive(domain) {
-    // Capture epoch at start — if another domain is selected mid-fetch, this epoch becomes stale
     const myEpoch = STATE.fetchEpoch;
     const isCurrent = () => STATE.fetchEpoch === myEpoch && STATE.currentDomain === domain;
 
-    // Track 6 sources: arxiv, s2, openalex, crossref, blog
-    STATE.fetchProgress = { arxiv:null, s2:null, openalex:null, crossref:null, blog:null, scholar: STATE.serpApiKey ? null : 'skip' };
+    STATE.fetchProgress = { arxiv: null, s2: null, blog: null, scholar: STATE.serpApiKey ? null : 'skip' };
     updateFetchStatus();
 
-    // ── 1. arXiv ──
+    // ── 1. arXiv — domain categories ──
     const arxivP = fetchArxiv(domain)
       .then(papers => {
         if (!isCurrent()) return;
-        const filtered = applyDomainFilter(papers, domain);
-        STATE.fetchProgress.arxiv = filtered.length > 0 ? true : 'empty';
-        ingestPapers(filtered, domain);
+        STATE.fetchProgress.arxiv = papers.length > 0 ? true : 'empty';
+        ingestPapers(papers, domain);
         updateFetchStatus();
       })
       .catch(e => {
@@ -1294,19 +1253,17 @@ Rules:
         if (STATE.papers.length === 0) showFeedError(e.message);
       });
 
-    // ── 2. Semantic Scholar ──
-    const s2Tasks = [
-      fetchSemanticScholar(domain),
-      ...(PROF_AUTHORS[domain] || []).map(a => fetchAuthorPapers(a.id, domain)),
-    ];
+    // ── 2. Semantic Scholar — professor papers only, venue-filtered ──
+    const profList = PROF_AUTHORS[domain] || [];
+    const s2Tasks = profList.map(a => fetchAuthorPapers(a.id, domain));
     const s2P = Promise.allSettled(s2Tasks).then(results => {
       if (!isCurrent()) return;
       const all = [];
       let rateLimited = false;
-      results.forEach(r => {
+      results.forEach((r, i) => {
         if (r.status === 'fulfilled') all.push(...r.value);
         else if (r.reason?.message === 'S2_RATE_LIMIT') rateLimited = true;
-        else console.warn('S2:', r.reason?.message);
+        else console.warn(`S2 prof ${profList[i]?.name}:`, r.reason?.message);
       });
       if (rateLimited) showToast('S2 RATE LIMITED — try again in 60s');
       const filtered = applyDomainFilter(all, domain);
@@ -1315,39 +1272,7 @@ Rules:
       updateFetchStatus();
     });
 
-    // ── 3. OpenAlex ──
-    const oaP = fetchOpenAlex(domain)
-      .then(papers => {
-        if (!isCurrent()) return;
-        const filtered = applyDomainFilter(papers, domain);
-        STATE.fetchProgress.openalex = filtered.length > 0 ? true : 'empty';
-        ingestPapers(filtered, domain);
-        updateFetchStatus();
-      })
-      .catch(e => {
-        if (!isCurrent()) return;
-        STATE.fetchProgress.openalex = false;
-        console.warn('OpenAlex:', e.message);
-        updateFetchStatus();
-      });
-
-    // ── 4. CrossRef ──
-    const crP = fetchCrossRef(domain)
-      .then(papers => {
-        if (!isCurrent()) return;
-        const filtered = applyDomainFilter(papers, domain);
-        STATE.fetchProgress.crossref = filtered.length > 0 ? true : 'empty';
-        ingestPapers(filtered, domain);
-        updateFetchStatus();
-      })
-      .catch(e => {
-        if (!isCurrent()) return;
-        STATE.fetchProgress.crossref = false;
-        console.warn('CrossRef:', e.message);
-        updateFetchStatus();
-      });
-
-    // ── 5. Blogs / RSS ──
+    // ── 3. Curated blog feeds from resources_v2.md ──
     const blogP = fetchBlogFeeds(domain)
       .then(papers => {
         if (!isCurrent()) return;
@@ -1361,7 +1286,7 @@ Rules:
         updateFetchStatus();
       });
 
-    // ── 6. Google Scholar (SerpApi) — only if key provided ──
+    // ── 4. Google Scholar via SerpApi (optional) ──
     let scholarP = Promise.resolve();
     if (STATE.serpApiKey) {
       scholarP = fetchAllScholarAuthors(domain, STATE.serpApiKey)
@@ -1374,15 +1299,15 @@ Rules:
         .catch(e => {
           if (!isCurrent()) return;
           STATE.fetchProgress.scholar = false;
-          console.warn('Scholar block:', e.message);
+          console.warn('Scholar:', e.message);
           updateFetchStatus();
         });
     } else {
       STATE.fetchProgress.scholar = 'skip';
     }
 
-    await Promise.allSettled([arxivP, s2P, oaP, crP, blogP, scholarP]);
-    if (!isCurrent()) return; // domain was switched mid-fetch
+    await Promise.allSettled([arxivP, s2P, blogP, scholarP]);
+    if (!isCurrent()) return;
     STATE.loading = false;
     STATE.domainFetchTime.set(domain, Date.now());
     STATE.domainCache.set(domain, [...STATE.papers]);
@@ -1687,9 +1612,7 @@ Rules:
 
     const parts = [
       srcSpan('arXiv', p.arxiv),
-      srcSpan('S2', p.s2),
-      srcSpan('OA', p.openalex),
-      srcSpan('CR', p.crossref),
+      srcSpan('Profs', p.s2),
       srcSpan('Blog', p.blog),
       ...(STATE.serpApiKey ? [srcSpan('Scholar', p.scholar)] : []),
     ];
@@ -1800,9 +1723,7 @@ Rules:
     if (total > 0) {
       const parts = [];
       if (counts.arxiv)    parts.push(`arXiv:${counts.arxiv}`);
-      if (counts.s2)       parts.push(`S2:${counts.s2}`);
-      if (counts.openalex) parts.push(`OA:${counts.openalex}`);
-      if (counts.crossref) parts.push(`CR:${counts.crossref}`);
+      if (counts.s2)       parts.push(`Profs:${counts.s2}`);
       if (counts.blog)     parts.push(`Blog:${counts.blog}`);
       if (counts.scholar)  parts.push(`Scholar:${counts.scholar}`);
       parts.push(`TOTAL:${total}`);
@@ -1868,7 +1789,7 @@ Rules:
     if(STATE.domainCache.has(key)){
       STATE.papers=[...STATE.domainCache.get(key)];
       // Reset fetch progress to all-done so spinner doesn't show
-      STATE.fetchProgress = { arxiv:true, s2:true, openalex:true, crossref:true, blog:true, scholar: STATE.serpApiKey ? true : 'skip' };
+      STATE.fetchProgress = { arxiv:true, s2:true, blog:true, scholar: STATE.serpApiKey ? true : 'skip' };
       sortPapers(); renderFeed(); updateFetchStatus(); updateStatusBar();
       return;
     }
