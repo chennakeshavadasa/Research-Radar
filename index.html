@@ -791,43 +791,31 @@
     ],
   };
 
-  // OpenAlex concept/topic IDs;
-
-  // OpenAlex concept/topic IDs for domain mapping
-  // OpenAlex: 250M papers, completely free, no key, CORS: *
-  const OPENALEX_CONCEPTS = {
-    'ai':        ['C154945302','C108583219','C41008148'],  // ML, AI, CS
-    'ai-finance':['C154945302','C162324750'],              // ML, Economics
-    'quant':     ['C162324750','C10138342'],               // Economics, Finance
-    'hft':       ['C162324750','C10138342'],
-    'computing': ['C41008148','C456837379'],               // CS, Computer arch
-    'vlsi':      ['C456837379','C1491515'],                // Comp arch, EDA
-    'ams':       ['C3029738','C12700722'],                 // Electronics, Analog
-    'serdes':    ['C3029738','C171250308'],                // Electronics, Telecom
-    'ai-chips':  ['C456837379','C154945302'],              // Comp arch, ML
-  };
-
-  // CrossRef queries per domain — broad enough to get results
+  // CrossRef queries per domain — specific enough to get relevant results
   const CROSSREF_QUERIES = {
-    'ai':        'artificial intelligence machine learning deep learning',
-    'ai-finance':'machine learning finance quantitative trading risk',
-    'quant':     'quantitative finance portfolio optimization factor model',
-    'hft':       'high frequency trading market microstructure order book',
-    'computing': 'computer architecture processor cache memory system',
-    'vlsi':      'VLSI integrated circuit EDA physical design',
-    'ams':       'analog circuit ADC DAC PLL amplifier CMOS',
-    'serdes':    'high speed serial link CDR equalization PAM wireline',
-    'ai-chips':  'deep learning hardware accelerator neural network chip',
+    'ai':        'deep learning neural network transformer attention mechanism',
+    'ai-finance':'machine learning algorithmic trading financial prediction neural',
+    'quant':     'quantitative finance factor model systematic trading portfolio optimization',
+    'hft':       'high frequency trading market microstructure order book execution',
+    'computing': 'computer architecture processor cache memory hierarchy performance',
+    'vlsi':      'VLSI integrated circuit physical design placement routing EDA',
+    'ams':       'analog-to-digital converter ADC DAC phase-locked loop PLL amplifier CMOS ISSCC',
+    'serdes':    'high speed serial link CDR clock data recovery PAM4 equalizer transceiver',
+    'ai-chips':  'deep learning accelerator neural processing unit systolic array inference',
   };
 
-  // Domain keyword filters — tighten noisy categories post-fetch
+  // Domain keyword filters — used to post-filter CrossRef and OpenAlex (which return broad results)
+  // arXiv, S2, blogs, and Scholar are already domain-targeted and skip this filter
   const DOMAIN_KEYWORDS = {
-    'ams':    ['adc','dac','pll','amplifier','bandgap','cmos','oscillator','comparator','sar','delta-sigma','sigma-delta','noise','linearity','enob','sndr','op-amp','transconductance','gm/id','switched-capacitor','isscc','jssc','cicc','esscirc','filter','mixer','lna'],
-    'serdes': ['serdes','cdr','equalization','pam4','wireline','transceiver','jitter','eye diagram','ffe','dfe','ctle','clock recovery','optical transceiver','coherent','baud rate'],
-    'vlsi':   ['place','route','eda','synthesis','floorplan','timing','physical design','verification','gdsii','lithography','drc','sta','cell library','power grid','signoff'],
-    'ai-chips':['accelerator','npu','compute-in-memory','chiplet','dataflow','systolic array','inference engine','sparse','quantization','neural hardware','dma','bandwidth','eyeriss','tpu'],
-    'hft':    ['high-frequency','market microstructure','order book','bid-ask','latency','execution','arbitrage','limit order','lob','price impact','tick','hft'],
-    'quant':  ['factor','alpha','portfolio','backtest','sharpe','drawdown','momentum','mean-reversion','risk premia','kelly','strategy','return prediction','signals'],
+    'ai':        ['neural network','transformer','language model','diffusion model','reinforcement learning','llm','gpt','bert','attention mechanism','deep learning','machine learning','gradient descent','embedding','fine-tuning','prompt','alignment','rlhf','foundation model','generative model','image recognition','text classification','object detection'],
+    'ai-finance':['machine learning finance','deep learning trading','nlp financial','credit risk','fraud detection','portfolio machine learning','sentiment financial','neural network price','algorithmic trading','fintech','risk model','earnings prediction','market prediction','robo-advisor','loan default','financial nlp'],
+    'quant':     ['factor model','quantitative trading','systematic strategy','portfolio optimization','alpha','sharpe ratio','backtest','momentum factor','mean reversion','risk premia','return prediction','cross-sectional','smart beta','portfolio construction','asset pricing','drawdown','kelly criterion','factor zoo'],
+    'hft':       ['high-frequency trading','market microstructure','order book','bid-ask spread','latency','execution quality','arbitrage','limit order','price impact','tick data','hft','market making','adverse selection','mid-price','order flow'],
+    'computing': ['processor architecture','cache hierarchy','memory system','compiler optimization','operating system','distributed computing','gpu architecture','cpu design','fpga','instruction set architecture','pipeline','branch prediction','out-of-order execution','scheduling','hypervisor','kernel','multicore','cpu cache','memory bandwidth'],
+    'vlsi':      ['place and route','eda tool','floorplan','timing closure','physical design','formal verification','gdsii','lithography','design rule','static timing','cell library','power grid','logic synthesis','design automation','vlsi','parasitic extraction','crosstalk','timing analysis'],
+    'ams':       ['adc','dac','pll','amplifier','bandgap','analog cmos','oscillator','comparator','sar adc','delta-sigma','sigma-delta','noise figure','linearity','enob','sndr','snr','op-amp','transconductance','gm/id','switched-capacitor','isscc','jssc','cicc','esscirc','active filter','mixer','lna','vco','voltage reference','bias circuit','current mirror','operational amplifier','analog circuit'],
+    'serdes':    ['serdes','cdr','equalization','pam4','wireline','transceiver','jitter','eye diagram','ffe','dfe','ctle','clock recovery','optical transceiver','coherent optical','baud rate','nrz','serial link','high-speed link','bang-bang pll','phase detector','pre-emphasis'],
+    'ai-chips':  ['neural network accelerator','npu','compute-in-memory','chiplet','dataflow architecture','systolic array','inference accelerator','sparse neural','quantization hardware','neural hardware','pim','in-memory computing','eyeriss','tpu','wafer scale','hardware ml','ai processor','deep learning hardware','edge inference'],
   };
 
   const EXPLAINER_SYSTEM_PROMPT = `You are a research intelligence analyst for a technical audience (engineers and researchers).
@@ -868,6 +856,7 @@ Rules:
     serpApiKey: '',     // SerpApi key — get free 100/mo at serpapi.com
     fetchProgress: { arxiv:null, s2:null, openalex:null, crossref:null, blog:null, scholar:null },
     yearFilter: 'all',
+    fetchEpoch: 0,      // Incremented on each new domain fetch to cancel stale in-flight updates
   };
 
 
@@ -998,14 +987,14 @@ Rules:
     return (data.data || []).filter(p => p.abstract).map(p => parseS2Paper(p, domain));
   }
 
-  async function fetchOneBlog(feed) {
+  async function fetchOneBlog(feed, domain) {
     try {
       const items = await fetchRSS(feed.url);
       return items
         .filter(item => item.title && (item.link || item.url || item.guid))
         .map(item => ({
           id: item.link || item.url || item.guid || `blog-${Math.random()}`,
-          source: 'blog', domain: STATE.currentDomain,
+          source: 'blog', domain,
           title: (item.title || '').replace(/<[^>]+>/g,'').trim(),
           authors: [item.author || item['dc:creator'] || feed.name].filter(Boolean),
           abstract: (item.description || item.content || item.content_html || item.summary || '')
@@ -1023,7 +1012,7 @@ Rules:
   async function fetchBlogFeeds(domain) {
     const feeds = BLOG_FEEDS[domain] || [];
     if (!feeds.length) return [];
-    const results = await Promise.allSettled(feeds.map(f => fetchOneBlog(f)));
+    const results = await Promise.allSettled(feeds.map(f => fetchOneBlog(f, domain)));
     return results.flatMap(r => r.status==='fulfilled' ? r.value : []);
   }
 
@@ -1061,11 +1050,21 @@ Rules:
   }
 
   async function fetchOpenAlex(domain) {
-    const concepts = OPENALEX_CONCEPTS[domain];
-    if (!concepts?.length) return [];
-    // Use concept filter + recent sort for relevance
-    const conceptFilter = concepts.map(c => `concepts.id:${c}`).join('|');
-    const url = `https://api.openalex.org/works?filter=${encodeURIComponent(conceptFilter+',type:article')}&sort=publication_date:desc&per_page=30&select=id,title,authorships,publication_date,publication_year,abstract_inverted_index,cited_by_count,open_access,primary_location,host_venue,doi,concepts`;
+    // Use keyword search per domain rather than broad concept IDs for better precision
+    const OPENALEX_QUERIES = {
+      'ai':        'machine learning deep learning transformer neural network',
+      'ai-finance':'machine learning finance trading risk',
+      'quant':     'quantitative finance factor model portfolio',
+      'hft':       'high frequency trading market microstructure order book',
+      'computing': 'computer architecture processor memory hierarchy',
+      'vlsi':      'VLSI EDA physical design place route',
+      'ams':       'analog circuit ADC DAC PLL amplifier CMOS ISSCC',
+      'serdes':    'SerDes CDR equalization PAM4 wireline transceiver',
+      'ai-chips':  'neural network accelerator NPU deep learning hardware',
+    };
+    const q = OPENALEX_QUERIES[domain];
+    if (!q) return [];
+    const url = `https://api.openalex.org/works?search=${encodeURIComponent(q)}&filter=type:article&sort=publication_date:desc&per_page=25&select=id,title,authorships,publication_date,publication_year,abstract_inverted_index,cited_by_count,open_access,primary_location,host_venue,doi,concepts`;
     try {
       const resp = await fetchTimeout(url, {}, 15000);
       if (!resp.ok) throw new Error(`OpenAlex HTTP ${resp.status}`);
@@ -1207,29 +1206,38 @@ Rules:
     const kws = DOMAIN_KEYWORDS[domain];
     if (!kws) return papers;
     const kwl = kws.map(k => k.toLowerCase());
-    const rel = papers.filter(p => {
-      if (p.source === 'blog') return true;
+    return papers.filter(p => {
+      if (p.source === 'blog') return true;   // pre-curated per domain
+      if (p.source === 'arxiv') return true;  // filtered by arXiv categories
+      if (p.source === 's2') return true;     // S2 query + author papers are domain-specific
+      if (p.source === 'scholar') return true;// Scholar author papers are domain-specific
+      // CrossRef and OpenAlex: strict keyword filter, no fallback
       const t = (p.title + ' ' + (p.abstract||'') + ' ' + (p.venue||'')).toLowerCase();
       return kwl.some(k => t.includes(k));
     });
-    return rel.length >= 8 ? rel : papers; // don't filter too aggressively
   }
 
   /* Progressive streaming — 6 sources fire simultaneously, each streams in as it arrives */
   async function fetchAllSourcesProgressive(domain) {
+    // Capture epoch at start — if another domain is selected mid-fetch, this epoch becomes stale
+    const myEpoch = STATE.fetchEpoch;
+    const isCurrent = () => STATE.fetchEpoch === myEpoch && STATE.currentDomain === domain;
+
     // Track 6 sources: arxiv, s2, openalex, crossref, blog
-    STATE.fetchProgress = { arxiv:null, s2:null, openalex:null, crossref:null, blog:null };
+    STATE.fetchProgress = { arxiv:null, s2:null, openalex:null, crossref:null, blog:null, scholar: STATE.serpApiKey ? null : 'skip' };
     updateFetchStatus();
 
     // ── 1. arXiv ──
     const arxivP = fetchArxiv(domain)
       .then(papers => {
+        if (!isCurrent()) return;
         const filtered = applyDomainFilter(papers, domain);
         STATE.fetchProgress.arxiv = filtered.length > 0 ? true : 'empty';
         ingestPapers(filtered, domain);
         updateFetchStatus();
       })
       .catch(e => {
+        if (!isCurrent()) return;
         STATE.fetchProgress.arxiv = false;
         console.warn('arXiv:', e.message);
         updateFetchStatus();
@@ -1242,6 +1250,7 @@ Rules:
       ...(PROF_AUTHORS[domain] || []).map(a => fetchAuthorPapers(a.id, domain)),
     ];
     const s2P = Promise.allSettled(s2Tasks).then(results => {
+      if (!isCurrent()) return;
       const all = [];
       let rateLimited = false;
       results.forEach(r => {
@@ -1259,12 +1268,14 @@ Rules:
     // ── 3. OpenAlex ──
     const oaP = fetchOpenAlex(domain)
       .then(papers => {
+        if (!isCurrent()) return;
         const filtered = applyDomainFilter(papers, domain);
         STATE.fetchProgress.openalex = filtered.length > 0 ? true : 'empty';
         ingestPapers(filtered, domain);
         updateFetchStatus();
       })
       .catch(e => {
+        if (!isCurrent()) return;
         STATE.fetchProgress.openalex = false;
         console.warn('OpenAlex:', e.message);
         updateFetchStatus();
@@ -1273,12 +1284,14 @@ Rules:
     // ── 4. CrossRef ──
     const crP = fetchCrossRef(domain)
       .then(papers => {
+        if (!isCurrent()) return;
         const filtered = applyDomainFilter(papers, domain);
         STATE.fetchProgress.crossref = filtered.length > 0 ? true : 'empty';
         ingestPapers(filtered, domain);
         updateFetchStatus();
       })
       .catch(e => {
+        if (!isCurrent()) return;
         STATE.fetchProgress.crossref = false;
         console.warn('CrossRef:', e.message);
         updateFetchStatus();
@@ -1287,11 +1300,13 @@ Rules:
     // ── 5. Blogs / RSS ──
     const blogP = fetchBlogFeeds(domain)
       .then(papers => {
+        if (!isCurrent()) return;
         STATE.fetchProgress.blog = papers.length > 0 ? true : 'empty';
         ingestPapers(papers, domain);
         updateFetchStatus();
       })
       .catch(() => {
+        if (!isCurrent()) return;
         STATE.fetchProgress.blog = false;
         updateFetchStatus();
       });
@@ -1301,11 +1316,13 @@ Rules:
     if (STATE.serpApiKey) {
       scholarP = fetchAllScholarAuthors(domain, STATE.serpApiKey)
         .then(papers => {
+          if (!isCurrent()) return;
           STATE.fetchProgress.scholar = papers.length > 0 ? true : 'empty';
           ingestPapers(papers, domain);
           updateFetchStatus();
         })
         .catch(e => {
+          if (!isCurrent()) return;
           STATE.fetchProgress.scholar = false;
           console.warn('Scholar block:', e.message);
           updateFetchStatus();
@@ -1315,6 +1332,7 @@ Rules:
     }
 
     await Promise.allSettled([arxivP, s2P, oaP, crP, blogP, scholarP]);
+    if (!isCurrent()) return; // domain was switched mid-fetch
     STATE.loading = false;
     STATE.domainFetchTime.set(domain, Date.now());
     STATE.domainCache.set(domain, [...STATE.papers]);
@@ -1573,37 +1591,41 @@ Rules:
       return;
     }
 
-    // Smart diff: build a set of IDs currently rendered, only add/remove deltas
+    // Smart diff: reuse existing DOM elements, but always re-insert in correct sorted order
     const rendered = new Map();
     list.querySelectorAll('.feed-item[data-id]').forEach(el => rendered.set(el.dataset.id, el));
     const targetIds = new Set(papers.map(p => p.id));
 
-    // Remove items no longer in filtered set
-    rendered.forEach((el, id) => { if (!targetIds.has(id)) el.remove(); });
-
-    // Rebuild in correct order using a fragment for new items only
-    const frag = document.createDocumentFragment();
-    let prevEl = null;
-    papers.forEach((p, i) => {
+    // Build ordered array of elements (reuse existing, create new as needed)
+    const orderedEls = papers.map((p, i) => {
       let el = rendered.get(p.id);
       if (!el) {
         el = renderFeedItem(p, i);
       }
-      frag.appendChild(el);
-      prevEl = el;
+      return el;
     });
-    // Re-insert in sorted order (fragment preserves order)
+
+    // Remove elements no longer needed
+    rendered.forEach((el, id) => { if (!targetIds.has(id)) el.remove(); });
+
+    // Re-insert all in correct order using replaceChildren (maintains sort, no flicker)
+    // Remove any stale skeleton items first
+    list.querySelectorAll('.skeleton-item').forEach(el => el.remove());
+    const frag = document.createDocumentFragment();
+    orderedEls.forEach(el => frag.appendChild(el));
     list.appendChild(frag);
 
     const arxivN=STATE.papers.filter(p=>p.source==='arxiv').length;
-    document.getElementById('load-more').classList.toggle('hidden', arxivN<50||STATE.sourceFilter==='saved');
+    // Show "load more" when arXiv has returned papers AND we're not in saved mode AND not currently loading
+    document.getElementById('load-more').classList.toggle('hidden', arxivN===0 || STATE.sourceFilter==='saved' || STATE.loading);
     if(STATE.selectedPaper)highlightFeedItem(STATE.selectedPaper.id);
   }
 
   function updateFetchStatus() {
     const row = document.getElementById('fetch-status-row');
     const p = STATE.fetchProgress;
-    const anyPending = Object.values(p).some(v => v === null);
+    // Only show spinner if actively loading AND at least one source still pending
+    const anyPending = STATE.loading && Object.values(p).some(v => v === null);
 
     const sep = `<span style="color:var(--border-primary)"> · </span>`;
     const srcSpan = (label, state) => {
@@ -1782,7 +1804,9 @@ Rules:
   ════════════════════════════════════════════════════════ */
 
   async function selectDomain(key) {
-    if(STATE.loading)return;
+    // Allow switching domains at any time — increment epoch so in-flight fetches self-cancel
+    STATE.fetchEpoch = (STATE.fetchEpoch || 0) + 1;
+    STATE.loading = false;
     STATE.currentDomain=key; STATE.selectedPaper=null; STATE.explainer=null;
     STATE.papers=[]; STATE.arXivStart=0;
     updateDomainColor(key); updateDomainNav(); renderDetailEmpty();
@@ -1790,11 +1814,12 @@ Rules:
     document.getElementById('load-more').classList.add('hidden');
     document.getElementById('feed-filter').value=''; STATE.filterText='';
     document.getElementById('feed-count-badge').textContent='';
-    updateStatusBar();
 
     if(STATE.domainCache.has(key)){
-      STATE.papers=STATE.domainCache.get(key);
-      sortPapers(); renderFeed(); updateStatusBar();
+      STATE.papers=[...STATE.domainCache.get(key)];
+      // Reset fetch progress to all-done so spinner doesn't show
+      STATE.fetchProgress = { arxiv:true, s2:true, openalex:true, crossref:true, blog:true, scholar: STATE.serpApiKey ? true : 'skip' };
+      sortPapers(); renderFeed(); updateFetchStatus(); updateStatusBar();
       return;
     }
 
