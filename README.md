@@ -2,7 +2,7 @@
 
 > A self-contained research intelligence terminal for AI, Chip Design, Quant Finance, and more — no backend, no install, runs entirely in your browser.
 
-**Live →** [chennakeshavadasa.github.io/Research-Radar](https://chennakeshavadasa.github.io/Research-Radar)
+**Live →** [chennakeshavadasa.github.io/Research-Radar](https://nithinpuru.github.io/research-radar/)
 
 ---
 
@@ -49,7 +49,7 @@ Research Radar aggregates papers, preprints, and blog posts from **6 live source
 ## Usage
 
 ### Option 1 — Live (no setup)
-Open **[chennakeshavadasa.github.io/Research-Radar](https://chennakeshavadasa.github.io/Research-Radar)** in any browser.
+Open **[chennakeshavadasa.github.io/Research-Radar](https://nithinpuru.github.io/research-radar/)** in any browser.
 
 ### Option 2 — Local
 ```bash
